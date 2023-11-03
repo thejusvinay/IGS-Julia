@@ -1,7 +1,7 @@
-
+ 
 function solve()
     
-    t = 1
+    t = 0.1
     n = t/dt
     Initial()
     WtMSH()
@@ -9,17 +9,20 @@ function solve()
         println(i*dt)
         Map2Nod()
         Update()
-        WtRES(i)
+         if i == 1
+            WtRES(i)
+         end
 
-         if i%10 == 0
-            file = open("Stress_radial.csv", "a")    
-            println(file, i,"\t", Sigg[2,1,200],"\t", Sigg[2,2,200],"\t", Sigg[2,3,200],"\t", Sigg[2,4,200],"\t")
-            println("\n")
-            close(file)
-            File = open("Stress_horizontal.csv","a")
-            println(File, i,"\t", Sigg[1,1,200],"\t", Sigg[1,2,200],"\t", Sigg[1,3,200],"\t", Sigg[1,4,200],"\t")
-            println("\n")
-            close(File)
+         if i%1000 == 0
+            WtRES(i)
+            # file = open("Stress_radial.csv", "a")    
+            # println(file, i,"\t", Sigg[2,1,1],"\t", Sigg[2,2,1],"\t", Sigg[2,3,1],"\t", Sigg[2,4,1],"\t")
+            # println("\n")
+            # close(file)
+            # File = open("Stress_horizontal.csv","a")
+            # println(File, i,"\t", Sigg[1,1,1],"\t", Sigg[1,2,1],"\t", Sigg[1,3,1],"\t", Sigg[1,4,1],"\t")
+            # println("\n")
+            # close(File)
 
          end
        
@@ -156,7 +159,7 @@ function Initial()
             global HS[3, IEl, ig] = (1.0 + xi) * (1.0 + eta) / 4.0
             global HS[4, IEl, ig] = (1.0 - xi) * (1.0 + eta) / 4.0 
             
-            global Area[IEl] = (NodCo[1, INod[3]] - NodCo[1, INod[1]]) * (NodCo[2, INod[3]] - NodCo[2, INod[1]])
+            global Area[IEl] = abs(NodCo[1, INod[3]] - NodCo[1, INod[1]]) * abs(NodCo[2, INod[3]] - NodCo[2, INod[1]])
             Ja = zeros(Float64, 2, 2)  # Initialize Ja as a 2x2 matrix of zeros
     
             for i = 1:2
@@ -213,7 +216,7 @@ end
 
 function Update()
 
-    dampf = 0.00001
+    dampf = 0.05
 
     for I in 1:NNod 
         Id = (I - 1) * 2
@@ -234,7 +237,7 @@ function Update()
     
 
     for IEl in 1:NEl
-        INod[:] = Icon[:, IEl]
+        INod[:] = Icon[:, IEl]      
         for ig in 1:4 # Gauss loop
             delV = zeros(Float64, 4)
             for I in 1:4
@@ -250,28 +253,28 @@ function Update()
             global EpsG[2, ig, IEl] += dEps[2]
             global EpsG[3, ig, IEl] += dEps[3]
             
-            Elastic(MatProp[3],MatProp[4], dEps, Sigg[:, ig, IEl], ig, IEl)
+            Elastic(MatProp[3],MatProp[4], dEps, Sigg, ig, IEl)
             
         end
     end
              
 end
 
-function Elastic(E, nu, eps, sig, ig, IEl)
+function Elastic(E, nu, eps, Sigg, ig, IEl)
 
     G_mod = E / (2.0 * (1 + nu))
     K_mod = E / (3.0 * (1 - 2 * nu))
 
     Eps_tr = eps[1] + eps[2] 
 
-    sig[1] = sig[1] + ((K_mod * Eps_tr) + 2 * G_mod * (eps[1] - (Eps_tr / 3.0)))
-    sig[2] = sig[2] + ((K_mod * Eps_tr) + 2 * G_mod * (eps[2] - (Eps_tr / 3.0)))
-    sig[3] = sig[3] + (2 * G_mod * eps[3])
-    sig[4] = sig[4] + ((K_mod * Eps_tr) + 2 * G_mod * (0.0 - (Eps_tr / 3.0)))
+   global Sigg[1,ig,IEl] = Sigg[1,ig,IEl] + ((K_mod * Eps_tr) + 2 * G_mod * (eps[1] - (Eps_tr / 3.0)))
+   global Sigg[2,ig,IEl] = Sigg[2,ig,IEl] + ((K_mod * Eps_tr) + 2 * G_mod * (eps[2] - (Eps_tr / 3.0)))
+   global Sigg[3,ig,IEl] = Sigg[3,ig,IEl] + (2 * G_mod * eps[3])
+   global Sigg[4,ig,IEl] = Sigg[4,ig,IEl] + ((K_mod * Eps_tr) + 2 * G_mod * (0.0 - (Eps_tr / 3.0)))
 
 
     
-    global Sigg[:, ig, IEl] .= sig[:]
+    # global Sigg[:, ig, IEl] .= sig[:]
 
     
 end
@@ -297,7 +300,6 @@ end
 println("Creating a new file...")
 
 file = open(flnam, "w")
-println(file, "This is a newly created file.")
 close(file)
 
 println("File created: $flnam")
