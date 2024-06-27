@@ -1,4 +1,4 @@
- 
+#= Solver, running over a loop 
 function solve()
     
     t = 0.1
@@ -29,7 +29,7 @@ function solve()
     end
 end
 
-
+#= input file
 file = open("input.dat", "r")
 
 lines = readlines(file)
@@ -41,7 +41,6 @@ NEl = parse(Int, N[1])
 NNod = parse(Int, N[2])
 
 dt = 0.0001
-
 
 MatProp = zeros(10)
 for i in 1:10
@@ -110,9 +109,9 @@ file = open("input.dat", "r")
     end
    
 
+#= Initialise all values
 function Initial()  
 
-    
 
     JaI = zeros(Float64, 2, 2)
 
@@ -188,7 +187,9 @@ function Initial()
             end
         end   
     end
-end 
+end
+
+#= Compute all forces, Internal, External and Gravity
 
 function Map2Nod()
 
@@ -213,6 +214,8 @@ function Map2Nod()
         end
     end
 end
+
+#= Incremental solution for momentum equation
 
 function Update()
 
@@ -260,6 +263,8 @@ function Update()
              
 end
 
+#= Hooke's law of elasticity
+
 function Elastic(E, nu, eps, Sigg, ig, IEl)
 
     G_mod = E / (2.0 * (1 + nu))
@@ -279,6 +284,7 @@ function Elastic(E, nu, eps, Sigg, ig, IEl)
     
 end
 
+#= Make GiD output files
 
 function MkOpFiles()
 
